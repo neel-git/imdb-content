@@ -84,38 +84,6 @@
       ]
     },
     {
-      "name": "Upload CSV — Assignment dataset format",
-      "request": {
-        "method": "POST",
-        "header": [],
-        "url": {
-          "raw": "{{base_url}}/api/v1/movies/upload",
-          "host": ["{{base_url}}"],
-          "path": ["api", "v1", "movies", "upload"]
-        },
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            {
-              "key": "file",
-              "type": "file",
-              "src": "/path/to/movies_data_assignment.csv",
-              "description": "CSV with assignment-dataset column names (title, release_date, vote_average, vote_count, languages, runtime)"
-            }
-          ]
-        },
-        "description": "Upload a CSV in the assignment dataset format.\n\nExpected columns:\nbudget, homepage, original_language, original_title, overview, release_date, revenue, runtime, status, title, vote_average, vote_count, production_company_id, genre_id, languages\n\nKey differences from IMDb format:\n- title → mapped to primary_title\n- release_date (YYYY-MM-DD) → year extracted automatically\n- vote_average → mapped to average_rating\n- vote_count (float string e.g. '5415.0') → mapped to num_votes as integer\n- languages (['English', 'French'] list string) → first language extracted"
-      },
-      "response": [
-        {
-          "name": "Success",
-          "status": "OK",
-          "code": 200,
-          "body": "{\n  \"inserted\": 45428,\n  \"skipped\": 0,\n  \"message\": \"Upload complete. 45428 inserted, 0 skipped.\"\n}"
-        }
-      ]
-    },
-    {
       "name": "List Movies — Default",
       "request": {
         "method": "GET",

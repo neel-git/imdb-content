@@ -15,7 +15,7 @@ A Flask + MongoDB API for ingesting and querying IMDb-style movie/show data. Han
 ## Run the Project
 
 ```bash
-git clone https://github.com/neel-git/imdb-content
+git clone https://github.com/neel-git/imdb-content-system
 cd imdb-content-system
 
 cp .env.example .env
