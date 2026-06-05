@@ -1,0 +1,208 @@
+{
+  "info": {
+    "name": "IMDb Content Upload & Review System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "imdb-content-api-v1"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:5000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Liveness + readiness probe. Returns 200 when both the app and MongoDB are reachable, 503 when MongoDB is down."
+      },
+      "response": [
+        {
+          "name": "OK",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"status\": \"ok\",\n  \"database\": \"connected\"\n}"
+        },
+        {
+          "name": "Degraded",
+          "status": "Service Unavailable",
+          "code": 503,
+          "body": "{\n  \"status\": \"degraded\",\n  \"database\": \"unreachable\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Upload CSV — IMDb format",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies/upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies", "upload"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/path/to/sample_movies.csv",
+              "description": "CSV with IMDb-style column names (primary_title, start_year, average_rating, num_votes, language, runtime_minutes)"
+            }
+          ]
+        },
+        "description": "Upload a CSV in IMDb TSV format.\n\nExpected columns:\ntconst, title_type, primary_title, original_title, is_adult, start_year, end_year, runtime_minutes, genres, average_rating, num_votes, language\n\nIMDb's \\N null sentinel is accepted for optional fields.\nRows missing primary_title are skipped.\n\nSuccess response (200):\n{\n  \"inserted\": 1500,\n  \"skipped\": 12,\n  \"message\": \"Upload complete. 1500 inserted, 12 skipped.\"\n}\n\nAll rows unrecognised (422):\n{\n  \"error\": \"No rows could be inserted...\",\n  \"code\": \"NO_VALID_ROWS\",\n  \"inserted\": 0,\n  \"skipped\": 150\n}"
+      },
+      "response": [
+        {
+          "name": "Success",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"inserted\": 1500,\n  \"skipped\": 12,\n  \"message\": \"Upload complete. 1500 inserted, 12 skipped.\"\n}"
+        },
+        {
+          "name": "Invalid file type",
+          "status": "Bad Request",
+          "code": 400,
+          "body": "{\n  \"error\": \"Only .csv files are accepted\",\n  \"code\": \"INVALID_FILE_TYPE\"\n}"
+        },
+        {
+          "name": "No valid rows",
+          "status": "Unprocessable Entity",
+          "code": 422,
+          "body": "{\n  \"error\": \"No rows could be inserted. Check that your CSV uses recognised column names: primary_title (or title), start_year (or release_date), ...\",\n  \"code\": \"NO_VALID_ROWS\",\n  \"inserted\": 0,\n  \"skipped\": 150\n}"
+        }
+      ]
+    },
+    {
+      "name": "Upload CSV — Assignment dataset format",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies/upload",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies", "upload"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "/path/to/movies_data_assignment.csv",
+              "description": "CSV with assignment-dataset column names (title, release_date, vote_average, vote_count, languages, runtime)"
+            }
+          ]
+        },
+        "description": "Upload a CSV in the assignment dataset format.\n\nExpected columns:\nbudget, homepage, original_language, original_title, overview, release_date, revenue, runtime, status, title, vote_average, vote_count, production_company_id, genre_id, languages\n\nKey differences from IMDb format:\n- title → mapped to primary_title\n- release_date (YYYY-MM-DD) → year extracted automatically\n- vote_average → mapped to average_rating\n- vote_count (float string e.g. '5415.0') → mapped to num_votes as integer\n- languages (['English', 'French'] list string) → first language extracted"
+      },
+      "response": [
+        {
+          "name": "Success",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"inserted\": 45428,\n  \"skipped\": 0,\n  \"message\": \"Upload complete. 45428 inserted, 0 skipped.\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "List Movies — Default",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies"]
+        },
+        "description": "List movies with default pagination: page=1, page_size=20, sort by release_date descending."
+      }
+    },
+    {
+      "name": "List Movies — Filter by year + language",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies?year=2020&language=English&page=1&page_size=10",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies"],
+          "query": [
+            {"key": "year",      "value": "2020"},
+            {"key": "language",  "value": "English"},
+            {"key": "page",      "value": "1"},
+            {"key": "page_size", "value": "10"}
+          ]
+        },
+        "description": "Filter movies by release year and language (case-insensitive). Both filters can be used independently or together."
+      }
+    },
+    {
+      "name": "List Movies — Top rated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies?sort_by=ratings&order=desc&page=1&page_size=20",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies"],
+          "query": [
+            {"key": "sort_by",   "value": "ratings"},
+            {"key": "order",     "value": "desc"},
+            {"key": "page",      "value": "1"},
+            {"key": "page_size", "value": "20"}
+          ]
+        },
+        "description": "Top 20 highest-rated movies."
+      }
+    },
+    {
+      "name": "List Movies — Oldest first",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies?sort_by=release_date&order=asc&page=1&page_size=20",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies"],
+          "query": [
+            {"key": "sort_by",   "value": "release_date"},
+            {"key": "order",     "value": "asc"},
+            {"key": "page",      "value": "1"},
+            {"key": "page_size", "value": "20"}
+          ]
+        },
+        "description": "Movies sorted by release date ascending — oldest first."
+      }
+    },
+    {
+      "name": "List Movies — Paginated",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/movies?page=2&page_size=5&sort_by=ratings&order=desc",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "movies"],
+          "query": [
+            {"key": "page",      "value": "2"},
+            {"key": "page_size", "value": "5"},
+            {"key": "sort_by",   "value": "ratings"},
+            {"key": "order",     "value": "desc"}
+          ]
+        },
+        "description": "Page 2 of top-rated movies, 5 per page."
+      }
+    }
+  ]
+}
