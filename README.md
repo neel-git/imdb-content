@@ -9,14 +9,13 @@ A Flask + MongoDB API for ingesting and querying IMDb-style movie/show data. Han
 - [Docker](https://docs.docker.com/get-docker/) ≥ 24
 - [Docker Compose](https://docs.docker.com/compose/install/) ≥ 2.x
 
-No Python, pip, or MongoDB installation needed on your machine.
 
 ---
 
 ## Run the Project
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/neel-git/imdb-content
 cd imdb-content-system
 
 cp .env.example .env
@@ -192,6 +191,11 @@ Four indexes are created at startup so the evaluator doesn't need to set anythin
 ## Known Limitations
 
 Upload is synchronous — for files close to 1 GB the HTTP request stays open for the full duration. In a production system this would be handled by a background task queue (Celery + SQS) that returns a job ID immediately and processes the file async.
+
+---
+
+## Note
+If port 5000 is already in use (common on macOS where AirPlay uses it), change "5000:5000" to "5001:5000" in docker-compose.yml and access the API at http://localhost:5001.
 
 ---
 
